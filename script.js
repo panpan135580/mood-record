@@ -58,6 +58,9 @@ document.addEventListener('DOMContentLoaded', function () {
   const nextMonthBtn = document.getElementById('nextMonthBtn');
   const calendarMonthLabel = document.getElementById('calendarMonthLabel');
   const calendarGrid = document.getElementById('calendarGrid');
+  const jsonDataTextarea = document.getElementById('jsonDataTextarea');
+  const copyJsonButton = document.getElementById('copyJsonButton');
+  const importJsonButton = document.getElementById('importJsonButton');
 
   let currentSelectedScore = null;
   let currentImagesBase64 = []; // 保存当前页面中图片的 base64
@@ -483,6 +486,46 @@ document.addEventListener('DOMContentLoaded', function () {
       const range = btn.dataset.range;
       exportRange(range);
     });
+  });
+
+  // JSON 文本导入 / 导出
+  copyJsonButton.addEventListener('click', function () {
+    const data = loadData();
+    const jsonText = JSON.stringify(data);
+    jsonDataTextarea.value = jsonText;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(jsonText).catch(() => {
+        // 失败就只保留在文本框，不再提示
+      });
+    }
+  });
+
+  importJsonButton.addEventListener('click', function () {
+    const text = (jsonDataTextarea.value || '').trim();
+    if (!text) {
+      alert('请先在上方文本框中粘贴 JSON 数据。');
+      return;
+    }
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch (e) {
+      alert('JSON 格式不正确，请确认复制粘贴完整。');
+      return;
+    }
+    if (!parsed || typeof parsed !== 'object') {
+      alert('JSON 内容无效，期望是一个对象结构。');
+      return;
+    }
+
+    saveData(parsed);
+    alert('导入成功！已替换本设备的全部心情数据。');
+
+    // 重新刷新视图和图表
+    renderDate(todayStr);
+    updateTrendChart(loadData());
+    renderCalendar();
   });
 });
 

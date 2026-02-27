@@ -77,6 +77,15 @@
         <button class="export-option-button" data-range="month">导出一个月</button>
         <button class="export-option-button" data-range="year">导出一年</button>
       </div>
+      <div class="export-json-section">
+        <p class="json-title">数据迁移（JSON 文本）</p>
+        <textarea id="jsonDataTextarea" class="json-textarea" rows="4" placeholder="点击“导出为 JSON 文本”会在这里生成一段文本，可复制到手机；在手机粘贴到这里后点“从 JSON 导入”。"></textarea>
+        <div class="export-json-actions">
+          <button id="copyJsonButton" class="secondary-button json-btn">导出为 JSON 文本</button>
+          <button id="importJsonButton" class="primary-button json-btn">从 JSON 导入</button>
+        </div>
+        <p class="json-hint">提示：可通过微信/聊天工具，把 JSON 文本在电脑和手机之间互相复制粘贴。</p>
+      </div>
       <button id="closeExportModal" class="export-close-button">关闭</button>
     </div>
   </div>

@@ -338,6 +338,55 @@ body {
   background-color: #e7e7e7;
 }
 
+.export-json-section {
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px dashed #f0c6da;
+}
+
+.json-title {
+  margin: 0 0 4px;
+  font-size: 0.9rem;
+  color: #c15c85;
+}
+
+.json-textarea {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #ffd2e3;
+  padding: 6px 8px;
+  font-size: 0.8rem;
+  font-family: Consolas, "Courier New", monospace;
+  resize: vertical;
+  min-height: 72px;
+  box-sizing: border-box;
+}
+
+.json-textarea:focus {
+  outline: none;
+  border-color: #ff8fb7;
+  box-shadow: 0 0 0 2px rgba(255, 143, 183, 0.25);
+}
+
+.export-json-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.json-btn {
+  padding: 6px 10px;
+  font-size: 0.8rem;
+}
+
+.json-hint {
+  margin: 4px 0 0;
+  font-size: 0.75rem;
+  color: #aa8fa0;
+  line-height: 1.4;
+}
+
 .calendar-container {
   border-radius: 12px;
   border: 1px solid #ffd2e3;
