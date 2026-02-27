@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日心情记录</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <h1 class="today-title" id="todayDisplay"></h1>
+    </header>
+
+    <main class="main-content">
+      <section class="card section-score">
+        <h2 class="section-title">今日评分（1-10）</h2>
+        <div class="score-buttons" id="scoreButtons">
+          <!-- 评分按钮由 JS 生成 -->
+        </div>
+      </section>
+
+      <section class="card section-text">
+        <h2 class="section-title">心情文字</h2>
+        <textarea id="moodText" class="mood-textarea" rows="6" maxlength="500" placeholder="想说什么就写在这里吧（最多500字，可为空）"></textarea>
+        <div class="text-counter" id="textCounter">还可输入 500 字</div>
+      </section>
+
+      <section class="card section-images">
+        <h2 class="section-title">图片上传（最多3张）</h2>
+        <input type="file" id="imageInput" accept="image/*" multiple>
+        <div class="image-hint">一次最多选择 3 张图片，超过将被阻止。</div>
+        <div class="image-preview-wrapper" id="imagePreviewWrapper">
+          <!-- 图片缩略图 -->
+        </div>
+      </section>
+
+      <section class="card section-actions">
+        <button id="saveButton" class="primary-button">保存今日记录</button>
+        <button id="exportButton" class="secondary-button">设置 / 导出</button>
+      </section>
+    </main>
+
+    <aside class="trend-chart-container">
+      <div class="trend-inner">
+        <canvas id="trendChart"></canvas>
+        <div class="calendar-container">
+          <div class="calendar-header">
+            <button type="button" id="prevMonthBtn" class="calendar-nav-btn">‹</button>
+            <span id="calendarMonthLabel" class="calendar-month-label"></span>
+            <button type="button" id="nextMonthBtn" class="calendar-nav-btn">›</button>
+          </div>
+          <div class="calendar-weekdays">
+            <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+          </div>
+          <div class="calendar-grid" id="calendarGrid">
+            <!-- 日历日期由 JS 渲染 -->
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- 保存成功弹窗 -->
+  <div id="saveToast" class="save-toast">记录成功，愿你健康快乐(●'◡'●)~~</div>
+
+  <!-- 导出弹窗 -->
+  <div id="exportModal" class="export-modal hidden">
+    <div class="export-modal-content">
+      <h3 class="export-title">导出心情记录</h3>
+      <p class="export-subtitle">选择导出范围（相对于今天）：</p>
+      <div class="export-buttons">
+        <button class="export-option-button" data-range="day">导出一天</button>
+        <button class="export-option-button" data-range="week">导出一周</button>
+        <button class="export-option-button" data-range="month">导出一个月</button>
+        <button class="export-option-button" data-range="year">导出一年</button>
+      </div>
+      <button id="closeExportModal" class="export-close-button">关闭</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
