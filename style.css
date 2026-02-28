@@ -303,6 +303,19 @@ body {
   margin-bottom: 10px;
 }
 
+.export-buttons-pdf {
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+.pdf-option-button {
+  background-color: #ffeef6;
+}
+
+.pdf-option-button:hover {
+  background-color: #ffe0ee;
+}
+
 .export-option-button {
   width: 100%;
   border-radius: 14px;
