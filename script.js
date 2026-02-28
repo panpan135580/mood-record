@@ -488,16 +488,23 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // JSON 文本导入 / 导出
+  // JSON 文本导入 / 导出（仅日期、评分、文字，不含图片）
   copyJsonButton.addEventListener('click', function () {
     const data = loadData();
-    const jsonText = JSON.stringify(data);
+    const stripped = {};
+    for (const [date, record] of Object.entries(data)) {
+      if (record && typeof record.score === 'number') {
+        stripped[date] = {
+          score: record.score,
+          text: (record.text && String(record.text)) || ''
+        };
+      }
+    }
+    const jsonText = JSON.stringify(stripped);
     jsonDataTextarea.value = jsonText;
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(jsonText).catch(() => {
-        // 失败就只保留在文本框，不再提示
-      });
+      navigator.clipboard.writeText(jsonText).catch(function () {});
     }
   });
 
@@ -519,10 +526,21 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    saveData(parsed);
-    alert('导入成功！已替换本设备的全部心情数据。');
+    // 只合并日期、评分、文字，保留本机已有图片
+    const current = loadData();
+    for (const [date, record] of Object.entries(parsed)) {
+      if (record && typeof record.score === 'number') {
+        const existing = current[date];
+        current[date] = {
+          score: record.score,
+          text: (record.text && String(record.text)) || '',
+          images: (existing && Array.isArray(existing.images)) ? existing.images : []
+        };
+      }
+    }
+    saveData(current);
+    alert('导入成功！已合并日期、评分与文字（图片未包含在 JSON 中，本机原有图片保留）。');
 
-    // 重新刷新视图和图表
     renderDate(todayStr);
     updateTrendChart(loadData());
     renderCalendar();
