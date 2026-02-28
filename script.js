@@ -484,7 +484,208 @@ document.addEventListener('DOMContentLoaded', function () {
   exportOptionButtons.forEach(btn => {
     btn.addEventListener('click', function () {
       const range = btn.dataset.range;
-      exportRange(range);
+      if (range) exportRange(range);
+    });
+  });
+
+  // 导出 PDF（通过打印窗口“保存为 PDF”）
+  function escapeHtml(str) {
+    return String(str)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
+  }
+
+  function rangeLabel(range) {
+    if (range === 'day') return '一天';
+    if (range === 'week') return '一周';
+    if (range === 'month') return '一个月';
+    if (range === 'year') return '一年';
+    return '';
+  }
+
+  function exportPdfRange(range) {
+    const allData = loadData();
+    const dates = getRangeDates(range);
+    const records = [];
+    dates.forEach(d => {
+      const key = formatDate(d);
+      const record = allData[key];
+      if (record && typeof record.score === 'number') {
+        records.push({ dateObj: d, key, record });
+      }
+    });
+
+    if (!records.length) {
+      alert('所选时间范围内没有任何记录哦~');
+      return;
+    }
+
+    const title = `心情记录（${rangeLabel(range)}）`;
+    const cardsHtml = records.map(({ dateObj, record }) => {
+      const dateStr = formatDate(dateObj);
+      const weekday = getWeekdayText(dateObj);
+      const textHtml = escapeHtml(record.text || '').replaceAll('\n', '<br>');
+      const images = Array.isArray(record.images) ? record.images : [];
+      const imagesHtml = images.map(src => (
+        `<div class="img"><img src="${src}" alt="image"></div>`
+      )).join('');
+
+      return `
+        <section class="card">
+          <div class="head">
+            <div class="date">${dateStr} <span class="wk">${weekday}</span></div>
+            <div class="score">评分 <span class="badge">${record.score}</span></div>
+          </div>
+          <div class="text">${textHtml || '<span class="muted">（无文字）</span>'}</div>
+          ${images.length ? `<div class="imgs">${imagesHtml}</div>` : `<div class="muted img-empty">（无图片）</div>`}
+        </section>
+      `;
+    }).join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${escapeHtml(title)}</title>
+  <style>
+    :root{
+      --pink:#ff8fb7;
+      --pink2:#ffe2ee;
+      --text:#333;
+      --muted:#8a6a79;
+    }
+    *{box-sizing:border-box;}
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+      color:var(--text);
+      background:linear-gradient(180deg,#ffe7f2 0%, #ffffff 55%, #ffe7f2 100%);
+      padding:18px;
+    }
+    .wrap{max-width:820px;margin:0 auto;}
+    .top{
+      display:flex;align-items:flex-end;justify-content:space-between;gap:12px;
+      margin-bottom:12px;
+    }
+    h1{
+      margin:0;
+      font-size:18px;
+      color:#d95f8b;
+      font-weight:700;
+    }
+    .meta{font-size:12px;color:var(--muted);}
+    .card{
+      background:#fff;
+      border-radius:16px;
+      padding:14px 16px;
+      box-shadow:0 6px 16px rgba(217,95,139,.12);
+      border:1px solid rgba(255,143,183,.25);
+      margin:0 0 12px;
+      break-inside:avoid;
+      page-break-inside:avoid;
+    }
+    .head{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      margin-bottom:10px;
+    }
+    .date{font-size:14px;font-weight:700;color:#c15c85;}
+    .wk{font-weight:600;color:#b68aa2;margin-left:6px;}
+    .score{font-size:13px;color:#c15c85;}
+    .badge{
+      display:inline-flex;align-items:center;justify-content:center;
+      min-width:26px;height:22px;padding:0 8px;
+      background:var(--pink);
+      color:#fff;border-radius:999px;
+      margin-left:6px;font-weight:800;
+    }
+    .text{
+      font-size:13px;line-height:1.7;
+      background:rgba(255,226,238,.45);
+      border-radius:12px;
+      padding:10px 12px;
+      border:1px solid rgba(255,143,183,.22);
+      word-break:break-word;
+      white-space:normal;
+    }
+    .muted{color:var(--muted);}
+    .imgs{
+      margin-top:10px;
+      display:flex;flex-wrap:wrap;gap:8px;
+    }
+    .img{
+      width:140px;height:140px;
+      border-radius:14px;overflow:hidden;
+      background:var(--pink2);
+      border:1px solid rgba(255,143,183,.22);
+    }
+    .img img{width:100%;height:100%;object-fit:cover;display:block;}
+    .img-empty{margin-top:10px;font-size:12px;}
+    .print-tip{
+      margin:10px 0 14px;
+      background:#fff;
+      border:1px dashed rgba(255,143,183,.45);
+      border-radius:14px;
+      padding:10px 12px;
+      font-size:12px;
+      color:var(--muted);
+    }
+    .print-btn{
+      display:inline-block;
+      border:none;
+      background:var(--pink);
+      color:#fff;
+      padding:8px 12px;
+      border-radius:999px;
+      cursor:pointer;
+      font-size:12px;
+      margin-left:8px;
+    }
+    @media print{
+      body{background:#fff;padding:0;}
+      .print-tip{display:none;}
+      .card{box-shadow:none;border:1px solid #f2c6d8;}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <h1>${escapeHtml(title)}</h1>
+      <div class="meta">导出日期：${escapeHtml(todayStr)} ${escapeHtml(todayWeekday)}</div>
+    </div>
+    <div class="print-tip">
+      这里会弹出打印窗口，请选择“保存为 PDF”。如果没有自动弹出，请点
+      <button class="print-btn" onclick="window.print()">打开打印</button>
+    </div>
+    ${cardsHtml}
+  </div>
+  <script>
+    window.addEventListener('load', function(){
+      setTimeout(function(){ window.print(); }, 300);
+    });
+  </script>
+</body>
+</html>`;
+
+    const w = window.open('', '_blank');
+    if (!w) {
+      alert('浏览器拦截了新窗口，请允许弹窗后再导出 PDF。');
+      return;
+    }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+  }
+
+  const pdfButtons = document.querySelectorAll('.pdf-option-button');
+  pdfButtons.forEach(btn => {
+    btn.addEventListener('click', function () {
+      const range = btn.dataset.pdfRange;
+      exportPdfRange(range);
     });
   });
 
