@@ -1,6 +1,60 @@
 // 本地存储键名
 const STORAGE_KEY = 'moodDiaryData';
 
+// 压缩图片到较小尺寸与质量，返回 base64 数据 URL
+function compressImageFile(file, options = {}) {
+  const {
+    maxSize = 640,          // 最大宽高（像素）
+    quality = 0.6,          // 图片质量 0-1
+    outputType = 'image/jpeg'
+  } = options;
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const img = new Image();
+      img.onload = function () {
+        let { width, height } = img;
+        if (width <= 0 || height <= 0) {
+          resolve(e.target.result);
+          return;
+        }
+
+        const scale = Math.min(1, maxSize / Math.max(width, height));
+        const targetWidth = Math.round(width * scale);
+        const targetHeight = Math.round(height * scale);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(e.target.result);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+        try {
+          const dataUrl = canvas.toDataURL(outputType, quality);
+          resolve(dataUrl);
+        } catch (err) {
+          console.error('压缩图片失败，使用原图 base64', err);
+          resolve(e.target.result);
+        }
+      };
+      img.onerror = function (err) {
+        console.error('图片加载失败', err);
+        resolve(e.target.result);
+      };
+      img.src = e.target.result;
+    };
+    reader.onerror = function (err) {
+      reject(err);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 // 工具函数：格式化日期为 YYYY-MM-DD
 function formatDate(date) {
   const y = date.getFullYear();
@@ -33,7 +87,12 @@ function loadData() {
 
 // 写入本地存储
 function saveData(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {
+    console.error('写入本地数据失败', e);
+    alert('保存失败：浏览器本地存储空间可能已满（图片太多或太大）。\n\n解决方法：\n1. 减少每天上传的图片数量或分辨率；\n2. 清空浏览器站点数据后重新开始；\n3. 或改为仅记录文字与评分。');
+  }
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -130,7 +189,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // 图片上传
+  // 图片上传（压缩后再存）
   imageInput.addEventListener('change', function (event) {
     if (saveButton.disabled) {
       imageInput.value = '';
@@ -147,20 +206,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
     currentImagesBase64 = [];
 
-    let loadedCount = 0;
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        const base64 = e.target.result;
-        currentImagesBase64.push(base64);
-
-        loadedCount++;
-        if (loadedCount === files.length) {
-          renderImagePreviews();
-          imageInput.value = '';
-        }
-      };
-      reader.readAsDataURL(file);
+    Promise.all(
+      files.map(file =>
+        compressImageFile(file, { maxSize: 640, quality: 0.6, outputType: 'image/jpeg' })
+          .catch(err => {
+            console.error('单张图片压缩失败，使用原图 base64', err);
+            return new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = e => resolve(e.target.result);
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            });
+          })
+      )
+    ).then(results => {
+      currentImagesBase64 = results;
+      renderImagePreviews();
+      imageInput.value = '';
+    }).catch(err => {
+      console.error('图片处理失败', err);
+      alert('图片处理失败，请重试或更换图片。');
+      imageInput.value = '';
     });
   });
 
